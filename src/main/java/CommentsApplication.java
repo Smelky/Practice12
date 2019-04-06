@@ -2,7 +2,7 @@ public class CommentsApplication {
     public static void main(String[] args) throws Exception {
         YoutubeCommentParser parser = new YoutubeCommentParser();
         parser.init();
-        parser.getCommentsFromVideos("8n-qYptCU0A");
+        parser.getCommentsFromVideos("8n-qYptCU0A", "tsQsovPB3pU");
         for (YoutubeVideo video : parser.getListOfVideos()) {
             for (Comment comment : video.getComments()) {
                 System.out.println("Author: " + comment.getAuthor());
