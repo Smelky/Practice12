@@ -4,11 +4,13 @@ import com.google.api.services.youtube.model.CommentSnippet;
 import com.google.api.services.youtube.model.CommentThread;
 import com.google.api.services.youtube.model.CommentThreadListResponse;
 import com.google.common.collect.Lists;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
 
 public class YoutubeCommentParser {
+    public static final Logger LOGGER = Logger.getLogger(YoutubeCommentParser.class);
     private static YouTube youtube;
     private List<YoutubeVideo> listOfVideos = Lists.newArrayList();
     private static List<String> scopes = Lists.newArrayList("https://www.googleapis.com/auth/youtube.force-ssl");
@@ -18,7 +20,7 @@ public class YoutubeCommentParser {
         try {
             credential = Auth.authorize(scopes, "commentThreads");
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.info(e.getMessage());
         }
         youtube = new YouTube.Builder(Auth.HTTP_TRANSPORT, Auth.JSON_FACTORY, credential)
                 .setApplicationName("youtube-comments-parser").build();
@@ -31,13 +33,12 @@ public class YoutubeCommentParser {
             YoutubeVideo youtubeVideo = new YoutubeVideo();
 
             for (CommentThread videoComment : videoComments) {
-                Comment comment = new Comment();
                 snippet = videoComment.getSnippet().getTopLevelComment().getSnippet();
-                comment.setAuthor(snippet.getAuthorDisplayName());
-                comment.setCommentText(snippet.getTextDisplay());
-                comment.setLikes(snippet.getLikeCount());
-                comment.setUploadDate(snippet.getPublishedAt());
-                comment.setEdited(!(snippet.getUpdatedAt().equals(snippet.getPublishedAt())));
+                Comment comment = new Comment(snippet.getAuthorDisplayName(),
+                        snippet.getTextDisplay(),
+                        snippet.getLikeCount(),
+                        snippet.getPublishedAt(),
+                        snippet.getUpdatedAt().equals(snippet.getPublishedAt()));
                 youtubeVideo.getComments().add(comment);
             }
             listOfVideos.add(youtubeVideo);
@@ -50,9 +51,9 @@ public class YoutubeCommentParser {
             videoCommentsListResponse = youtube.commentThreads().list("snippet")
                     .setVideoId(videoId).setTextFormat("plainText").execute();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.info(e.getMessage());
         }
-        return videoCommentsListResponse.getItems();
+        return videoCommentsListResponse != null ? videoCommentsListResponse.getItems() : null;
     }
 
     public List<YoutubeVideo> getListOfVideos() {
